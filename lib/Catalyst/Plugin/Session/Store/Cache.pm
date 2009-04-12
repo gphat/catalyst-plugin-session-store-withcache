@@ -33,8 +33,8 @@ Catalyst::Plugin::Session::Store::Cache - Caching layer for Catalyst Sessions
 
 =head1 DESCRIPTION
 
-C<Catalyst::Plugin::Session::Store::Cache> sits atop your existing session
-store, caching sessions reads and writes.  The C<seconds> configuration option
+C<Catalyst::Plugin::Session::Store::Cache> sits atop your B<existing session
+store>, caching sessions reads and writes.  The C<seconds> configuration option
 provides the number of seconds that the session is allowed to be "stale".
 Failure of the underlying cache during this time would result in lost data,
 but that might be ok with you if it speeds things up.
@@ -52,7 +52,7 @@ sub setup_session {
     $c->maybe::next::method(@_);
 
     my $cache = CHI->new(
-        driver => $c->config->{session}->{cache}->{driver} || 'Memory'
+        driver => $c->config->{'Plugin::Session::Cache'}->{driver} || 'Memory'
     );
 
     $c->_session_cache($cache);
@@ -94,7 +94,7 @@ sub store_session_data {
         # If we are asked to store an expiration, compare it to the existing
         # expiration and only let it go to the backend if the expire time
         # is far enough, based on the config
-        my $fudge = $c->config->{session}->{cache}->{seconds} || 10;
+        my $fudge = $c->config->{'Plugin::Session::Cache'}->{seconds} || 10;
         if($data > ($curr_expiry + $fudge)) {
             # The new expiration is greater than the current one plus the
             # fudge time so let it go to the real store
