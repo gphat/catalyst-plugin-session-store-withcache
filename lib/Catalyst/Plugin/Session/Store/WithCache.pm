@@ -54,6 +54,8 @@ sub setup_session {
 
     $c->maybe::next::method(@_);
 
+	die "Please set the 'driver_options' configuration to use WithCache"
+	 	unless(ref($c->config->{session}->{with_cache}->{driver_options}) eq 'HASH');
     my $cache = CHI->new(
     	%{ $c->config->{session}->{with_cache}->{driver_options} }
     );
@@ -93,16 +95,22 @@ sub store_session_data {
 
     my $curr_expiry = $c->_session_cache->get("expires:$sid");
 
+	$c->log->debug('Curr is: '.$curr_expiry."\n");
+	$c->log->debug('Data is '.$data."\n");
+
     if($curr_expiry && $key =~ /^expires:/) {
         # If we are asked to store an expiration, compare it to the existing
         # expiration and only let it go to the backend if the expire time
         # is far enough, based on the config
-        my $fudge = $c->config->{}->{seconds} || 10;
+        my $fudge = $c->config->{session}->{with_cache}->{seconds} || 10;
+		$c->log->debug("Fudge is: $fudge\n");
         if($data > ($curr_expiry + $fudge)) {
             # The new expiration is greater than the current one plus the
             # fudge time so let it go to the real store
             $c->log->debug('Fudge exceeded, updating.');
             $c->maybe::next::method($key, $data);
+			# Store the new expiration in the cache!
+    		$c->_session_cache->set($key, $data);
         } else {
             $c->log->debug('Fudge not exceeded, skipping.');
         }
@@ -110,10 +118,13 @@ sub store_session_data {
         # If this isn't an expire update, let it come across
         $c->log->debug("Not expire, updating.");
         $c->maybe::next::method($key, $data);
+		# Always update the cache in this case
+    	$c->_session_cache->set($key, $data);
     }
 
-    # We are updating the cache regardless..
-    $c->_session_cache->set($key, $data);
+    # We will update the cache UNLESS this is an expire.  If it was an
+	# an expire that needed to be updated, then it would've been done above
+	# because refusing to do so
 }
 
 sub delete_session_data {
