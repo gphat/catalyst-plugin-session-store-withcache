@@ -1,4 +1,4 @@
-package Catalyst::Plugin::Session::Store::Cache;
+package Catalyst::Plugin::Session::Store::WithCache;
 use strict;
 use warnings;
 
@@ -14,26 +14,29 @@ use CHI ();
 
 our $VERSION = '0.01';
 
-__PACKAGE__->mk_classdata(qw/_session_cache/);
+__PACKAGE__->mk_classdata(qw/_session_cache _seconds/);
 
 =head1 NAME
 
-Catalyst::Plugin::Session::Store::Cache - Caching layer for Catalyst Sessions
+Catalyst::Plugin::Session::Store::WithCache - Caching layer for Catalyst Sessions
 
 =head1 SYNOPSIS
 
-    use Catalyst qw/Session Session::Store::Cache Session::Store::Something/;
+    use Catalyst qw/Session Session::Store::WithCache Session::Store::Something/;
 
-    MyApp->config->{session} = {
+    MyApp->config->{session}-> = {
         cache => {
-            driver => 'Memory',
+            driver_options => {
+				driver => 'Memory',
+				global => 1
+			},
             seconds => 300
         }
     };
 
 =head1 DESCRIPTION
 
-C<Catalyst::Plugin::Session::Store::Cache> sits atop your B<existing session
+C<Catalyst::Plugin::Session::Store::WithCache> sits atop your B<existing session
 store>, caching sessions reads and writes.  The C<seconds> configuration option
 provides the number of seconds that the session is allowed to be "stale".
 Failure of the underlying cache during this time would result in lost data,
@@ -52,7 +55,7 @@ sub setup_session {
     $c->maybe::next::method(@_);
 
     my $cache = CHI->new(
-        driver => $c->config->{'Plugin::Session::Cache'}->{driver} || 'Memory'
+    	%{ $c->config->{session}->{cache}->{driver_options} }
     );
 
     $c->_session_cache($cache);
@@ -94,7 +97,7 @@ sub store_session_data {
         # If we are asked to store an expiration, compare it to the existing
         # expiration and only let it go to the backend if the expire time
         # is far enough, based on the config
-        my $fudge = $c->config->{'Plugin::Session::Cache'}->{seconds} || 10;
+        my $fudge = $c->config->{}->{seconds} || 10;
         if($data > ($curr_expiry + $fudge)) {
             # The new expiration is greater than the current one plus the
             # fudge time so let it go to the real store
@@ -105,7 +108,7 @@ sub store_session_data {
         }
     } else {
         # If this isn't an expire update, let it come across
-        $c->log->debug('Not expire, updating.');
+        $c->log->debug("Not expire, updating.");
         $c->maybe::next::method($key, $data);
     }
 

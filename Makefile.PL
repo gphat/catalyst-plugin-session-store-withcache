@@ -9,6 +9,7 @@ build_requires 'Test::More';
 requires 'CHI' => '0.102';
 requires 'Catalyst::Plugin::Session';
 requires 'MRO::Compat';
+requires 'Moose' => '0.77';
 
 WriteAll;
 
