@@ -25,7 +25,7 @@ Catalyst::Plugin::Session::Store::WithCache - Caching layer for Catalyst Session
     use Catalyst qw/Session Session::Store::WithCache Session::Store::Something/;
 
     MyApp->config->{session}-> = {
-        cache => {
+        with_cache => {
             driver_options => {
 				driver => 'Memory',
 				global => 1
@@ -55,7 +55,7 @@ sub setup_session {
     $c->maybe::next::method(@_);
 
     my $cache = CHI->new(
-    	%{ $c->config->{session}->{cache}->{driver_options} }
+    	%{ $c->config->{session}->{with_cache}->{driver_options} }
     );
 
     $c->_session_cache($cache);

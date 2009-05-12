@@ -6,7 +6,7 @@ SYNOPSIS
         use Catalyst qw/Session Session::Store::WithCache Session::Store::Something/;
 
         MyApp->config->{session} = {
-            cache => {
+            with_cache => {
                 driver => 'Memory',
                 seconds => 300
             }
